@@ -23,9 +23,14 @@ def main() -> int:
                         help="Directory containing *_cases.csv files")
     parser.add_argument("--db", type=Path, default=DB_PATH,
                         help="Output database path")
+    parser.add_argument("--exclude", nargs="+", default=[], metavar="REF",
+                        help="Membrane refs to exclude (e.g. m34 m35 m38d)")
     args = parser.parse_args()
 
-    csv_paths = sorted(args.metrics.glob("*_cases.csv"))
+    csv_paths = sorted(
+        p for p in args.metrics.glob("*_cases.csv")
+        if p.stem.replace("_cases", "") not in args.exclude
+    )
     if not csv_paths:
         print(f"ERROR: no *_cases.csv files found in {args.metrics}", file=sys.stderr)
         return 1
