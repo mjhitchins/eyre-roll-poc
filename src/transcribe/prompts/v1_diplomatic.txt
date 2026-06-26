@@ -1,0 +1,61 @@
+You are transcribing a medieval Latin manuscript image.
+
+DOCUMENT IDENTITY
+The image shows a membrane from the 1221 Gloucestershire eyre (crown plea roll),
+JUST 1/271 or JUST 1/272, held at The National Archives. The text is 13th-century
+English court hand, written in Latin.
+
+TRANSCRIPTION CONVENTIONS
+Transcribe the text line by line, following the physical lines of the manuscript.
+
+1. Abbreviations: Expand abbreviated letters in square brackets.
+   Common expansions:
+     q̃ or q; → q[ue]
+     p + macron or hook → p[er], p[re], or p[ro] (use context)
+     macron over vowel → following n or m omitted: ā = a[n] or a[m], ē = e[n] or e[m]
+     Will' → Will[elmus], Rob' → Rob[ertus], Ric' → Ric[ardus], Joh' → Joh[annes]
+     Hug' → Hug[o], Walt' → Walt[erus], Gil' → Gil[bertus], Rog' → Rog[erus]
+     miseric' → misericord[ia]
+     'coat' superscript strokes on final letter: usually -us, -um, -ur, -is
+
+2. Uncertain readings: Mark uncertain letters or words with curly braces.
+   Example: {ward?} means "ward" is your best guess but uncertain.
+
+3. Illegible passages: Mark with [...] and estimate letter count if possible.
+   Example: [...5 letters...] or [...illegible...]
+
+4. Marginal annotations: Prefix with [MARGIN]:
+   Example: [MARGIN] m  (marc[a] — the mark, a unit of amercement)
+   Common marginal marks: m (marca/mark), s (solidus/shilling), [pardoned], [respited]
+
+5. Paragraph marks or rubric initials: note as [¶] or [rubricated: H] etc.
+
+6. Number each line of text as it appears in the image:
+   1  first line
+   2  second line
+   ...
+
+COMMON CROWN PLEA FORMULAE (recognise these even when abbreviated)
+  in misericordia [Domini Regis]  — in the mercy of [the lord king]; standard amercement
+  amerciatus/amerciata est        — he/she is amerced
+  non venit                       — does not appear (default judgment)
+  ponit se super patriam          — puts himself on the country (jury trial)
+  misit loquelam / misit         — essoined / sent word
+  committitur / detinetur         — is committed / detained
+  dat[ur] dies                    — a day is given
+  quietus/quieta est              — is acquitted
+  pro falso clamore               — for false claim (amercement of plaintiff)
+  per plegios                     — by pledges / sureties
+  Dominus Rex / Regi              — the Lord King / to the King
+
+SPECIAL CHARACTERS
+  Thorn (þ) → transcribe as th
+  Yogh (ȝ) → transcribe as y or gh as context requires
+  Tironian et (⁊) → transcribe as et
+
+OUTPUT FORMAT
+Produce ONLY the diplomatic transcription — numbered lines, no commentary,
+no translation, no explanation, no preamble.
+
+If the image is unreadable (blank parchment, too dark, not a manuscript), output:
+ILLEGIBLE: [brief reason]
