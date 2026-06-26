@@ -91,7 +91,7 @@ it, and never compute a reported score from a row whose `verified` is not `yes`.
 │   ├── transcripts/          # model transcriptions, one per membrane
 │   ├── scores/               # CER/WER reports
 │   └── metrics/              # final structured CSVs
-├── site/                     # generated static site for GitHub Pages
+├── docs/                     # generated static site for GitHub Pages
 │   └── .nojekyll             # serve files as-is, no Jekyll
 ├── src/
 │   ├── harvest/              # step 1: download AALT images
@@ -157,7 +157,7 @@ confirmed membrane:
 and a short `output/scores/REPORT.md` stating the error rate, what failed, and
 the main abbreviation/hand features that caused errors. That report is the
 artefact the PhD application draws on. Stage 7 then renders the derived metrics
-and headline error rate as a lightweight public proof-of-concept page (`site/`),
+and headline error rate as a lightweight public proof-of-concept page (`docs/`),
 hosted free on GitHub Pages — see `SPEC.md` §Stage 7 and Appendix A. The page is
 deliberately minimal and temporary (university infrastructure is the eventual
 home); it shows derived metrics, not manuscript images.

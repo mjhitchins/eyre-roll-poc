@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1221 Gloucestershire Eyre &mdash; Crown Plea Analysis</title>
+<style>
+  body        { font-family: Georgia, serif; max-width: 960px; margin: 2rem auto; padding: 0 1.25rem; color: #222; line-height: 1.5; }
+  h1          { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  h2          { font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.3rem; margin-top: 2rem; }
+  p.subtitle  { color: #555; font-size: 0.9rem; margin-top: 0; }
+  .stat-grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+  .stat-box   { border: 1px solid #ddd; padding: 0.75rem 1rem; text-align: center; }
+  .stat-num   { font-size: 2rem; font-weight: bold; color: #3a5c3a; }
+  .stat-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
+  table       { border-collapse: collapse; width: 100%; font-size: 0.82rem; margin-top: 0.5rem; }
+  th, td      { border: 1px solid #ddd; padding: 0.35rem 0.6rem; text-align: left; vertical-align: top; }
+  th          { background: #f4f4f4; font-size: 0.78rem; }
+  tr:nth-child(even) { background: #fafafa; }
+  .bar        { display: inline-block; background: #5a7a5a; height: 0.9em; vertical-align: middle; margin-left: 0.4em; }
+  #filter     { width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; border: 1px solid #ccc; }
+  .note       { font-size: 0.78rem; color: #555; border-left: 3px solid #bbb; padding: 0.5rem 0.75rem; margin-top: 2rem; line-height: 1.6; }
+  #loading    { color: #888; font-style: italic; margin-top: 2rem; }
+  #error      { color: #c00; display: none; margin-top: 1rem; }
+  a           { color: #3a5c3a; }
+</style>
+</head>
+<body>
+
+<h1>1221 Gloucestershire Eyre &mdash; Crown Plea Analysis</h1>
+<p class="subtitle">
+  Proof-of-concept: structured case data extracted from
+  F.&thinsp;W.&thinsp;Maitland, <em>Pleas of the Crown for the County of
+  Gloucester&nbsp;&hellip;&thinsp;1221</em> (Macmillan,&nbsp;1884).
+  JUST&thinsp;1/271 (Assize Roll), Gloucestershire eyre.
+</p>
+
+<div id="loading">Loading database&hellip;</div>
+<div id="error">Could not load database. If viewing locally, run:
+  <code>python -m http.server 8000 --directory site/</code>
+  and open <a href="http://localhost:8000">http://localhost:8000</a>
+</div>
+
+<div id="content" style="display:none">
+
+<h2>Summary</h2>
+<div class="stat-grid">
+  <div class="stat-box"><div class="stat-num" id="stat-pleas">—</div><div class="stat-label">pleas recorded</div></div>
+  <div class="stat-box"><div class="stat-num" id="stat-membranes">—</div><div class="stat-label">membrane(s)</div></div>
+  <div class="stat-box"><div class="stat-num" id="stat-hundreds">—</div><div class="stat-label">hundreds</div></div>
+  <div class="stat-box"><div class="stat-num" id="stat-built">—</div><div class="stat-label">database built</div></div>
+</div>
+
+<h2>Offence Types</h2>
+<table id="tbl-offences"></table>
+
+<h2>Verdicts</h2>
+<table id="tbl-verdicts"></table>
+
+<h2>All Pleas</h2>
+<input id="filter" type="search" placeholder="Filter by party name, hundred, offence, verdict&hellip;">
+<table id="tbl-pleas"></table>
+
+</div><!-- #content -->
+
+<div class="note">
+  <strong>Methodology.</strong>
+  Offence type and verdict are extracted by Latin keyword matching on Maitland&rsquo;s
+  1884 edition (public domain; Internet Archive: <code>crowncountyplea00glouuoft</code>).
+  Manuscript images (AALT JUST&thinsp;1/271) were transcribed with
+  Kraken&thinsp;7 + CATMuS Medieval model; character error rate on
+  membrane&thinsp;m24 was <strong>95.7&thinsp;%</strong> &mdash; an expected baseline for
+  off-the-shelf HTR on 13th-century English court hand without fine-tuning.
+  A high error rate is an honest and reportable finding; this page presents
+  derived metrics from the ground-truth edition, not from the raw transcript.
+  Source code: <a href="https://github.com/mjhitchins/eyre-roll-poc">github.com/mjhitchins/eyre-roll-poc</a>.
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.12.0/dist/sql-wasm.js"></script>
+<script>
+(async () => {
+  try {
+    const SQL = await initSqlJs({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/sql.js@1.12.0/dist/${f}`
+    });
+
+    const resp = await fetch('eyre1221.db');
+    if (!resp.ok) throw new Error(`fetch failed: ${resp.status}`);
+    const buf  = await resp.arrayBuffer();
+    const db   = new SQL.Database(new Uint8Array(buf));
+
+    function q(sql) {
+      const stmt = db.prepare(sql);
+      const rows = [];
+      while (stmt.step()) rows.push(stmt.getAsObject());
+      stmt.free();
+      return rows;
+    }
+
+    // --- Stats ---
+    document.getElementById('stat-pleas').textContent =
+      q("SELECT COUNT(*) AS n FROM pleas")[0].n;
+    document.getElementById('stat-membranes').textContent =
+      q("SELECT COUNT(DISTINCT membrane_ref) AS n FROM pleas")[0].n;
+    document.getElementById('stat-hundreds').textContent =
+      q("SELECT COUNT(DISTINCT hundred) AS n FROM pleas WHERE hundred != ''")[0].n;
+    const built = q("SELECT built_at FROM run_log ORDER BY id DESC LIMIT 1")[0];
+    document.getElementById('stat-built').textContent =
+      built ? built.built_at.slice(0, 10) : '—';
+
+    // --- Offences ---
+    const offences = q(
+      "SELECT offence_type, COUNT(*) AS n FROM pleas GROUP BY offence_type ORDER BY n DESC"
+    );
+    const maxO = Math.max(...offences.map(r => r.n), 1);
+    document.getElementById('tbl-offences').innerHTML =
+      '<tr><th>Offence type</th><th style="width:3em">Count</th><th></th></tr>' +
+      offences.map(r =>
+        `<tr><td>${r.offence_type || '<em>(unknown)</em>'}</td><td>${r.n}</td>` +
+        `<td><span class="bar" style="width:${(r.n / maxO * 140).toFixed(0)}px"></span></td></tr>`
+      ).join('');
+
+    // --- Verdicts ---
+    const verdicts = q(
+      "SELECT verdict, COUNT(*) AS n FROM pleas GROUP BY verdict ORDER BY n DESC"
+    );
+    const maxV = Math.max(...verdicts.map(r => r.n), 1);
+    document.getElementById('tbl-verdicts').innerHTML =
+      '<tr><th>Verdict</th><th style="width:3em">Count</th><th></th></tr>' +
+      verdicts.map(r =>
+        `<tr><td>${r.verdict || '<em>(none recorded)</em>'}</td><td>${r.n}</td>` +
+        `<td><span class="bar" style="width:${(r.n / maxV * 140).toFixed(0)}px"></span></td></tr>`
+      ).join('');
+
+    // --- Plea browser ---
+    const COLS  = ['membrane_ref','plea_num','hundred','party_1','party_2','offence_type','verdict','amercement_raw'];
+    const HEADS = ['Membrane','No.','Hundred','Party 1','Party 2','Offence','Verdict','Amercement'];
+
+    let allRows = q(
+      `SELECT ${COLS.join(',')} FROM pleas ORDER BY membrane_ref, CAST(plea_num AS INTEGER)`
+    );
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderPleas(rows) {
+      document.getElementById('tbl-pleas').innerHTML =
+        '<tr>' + HEADS.map(h => `<th>${h}</th>`).join('') + '</tr>' +
+        rows.map(r =>
+          '<tr>' + COLS.map(c => `<td>${esc(r[c])}</td>`).join('') + '</tr>'
+        ).join('');
+    }
+
+    renderPleas(allRows);
+
+    document.getElementById('filter').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      renderPleas(term
+        ? allRows.filter(r => COLS.some(c => esc(r[c]).toLowerCase().includes(term)))
+        : allRows
+      );
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display  = '';
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display   = 'block';
+    console.error(err);
+  }
+})();
+</script>
+</body>
+</html>

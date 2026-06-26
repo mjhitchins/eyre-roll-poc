@@ -62,7 +62,7 @@ cat output/metrics/cases.csv
 | 4 Score | `src/score/` | transcript + ground truth | `output/scores/` CER/WER |
 | 5 Structure | `src/structure/` | transcript | `output/metrics/` CSV |
 | 6 Collate | `src/collate/` | structured CSVs | aggregate metrics |
-| 7 Publish | `src/publish/` | scores + metrics | `site/index.html` |
+| 7 Publish | `src/publish/` | scores + metrics | `docs/index.html` |
 
 ---
 
@@ -86,7 +86,7 @@ cat output/metrics/cases.csv
 │   ├── transcripts/            # model transcriptions
 │   ├── scores/                 # CER/WER reports
 │   └── metrics/                # structured case CSVs
-├── site/                       # static site for GitHub Pages
+├── docs/                       # static site for GitHub Pages
 ├── src/
 │   ├── harvest/
 │   ├── preprocess/

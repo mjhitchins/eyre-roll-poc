@@ -187,7 +187,7 @@ stages can be built and validated one at a time.
 
 ### Stage 7 — Publish (`src/publish/`)
 - **In:** the score report and the collation metrics/plots from stages 4 and 6.
-- **Out:** a single self-contained `site/index.html` (plus `.nojekyll`),
+- **Out:** a single self-contained `docs/index.html` (plus `.nojekyll`),
   deployable to GitHub Pages.
 - **Purpose:** a lightweight, public **proof-of-concept** page summarising the
   *derived quantitative metrics* and the method — a shareable URL for
@@ -214,9 +214,9 @@ stages can be built and validated one at a time.
   proof-of-concept metrics are normally fine and helpful to show; if a specific
   result looks genuinely novel, flag it to the user rather than publishing it
   silently.
-- **Tests:** the build script produces a valid, self-contained `site/index.html`
+- **Tests:** the build script produces a valid, self-contained `docs/index.html`
   from a fixed set of sample outputs; no `data/images_*` files are copied into
-  `site/`; the headline CER/WER on the page matches the score report exactly.
+  `docs/`; the headline CER/WER on the page matches the score report exactly.
 
 See Appendix A for free hosting (GitHub Pages) setup.
 
@@ -302,7 +302,7 @@ Stage 7 publishes it as a shareable web page (Appendix A).
 
 GitHub Pages hosts static sites directly from a GitHub repository at no cost,
 over HTTPS, on a global CDN. Because the project is already a git repository,
-publishing is just a matter of enabling Pages and pushing the generated `site/`.
+publishing is just a matter of enabling Pages and pushing the generated `docs/`.
 
 ### A.1 Why GitHub Pages
 - **Free** for public repositories; no server, no card, no maintenance.
@@ -327,8 +327,8 @@ publishing is just a matter of enabling Pages and pushing the generated `site/`.
    supervisors.
 
 ### A.3 Routine publishing (per update)
-1. Run the Stage 7 build script to regenerate `site/` from the latest outputs.
-2. Review locally (open `site/index.html` in a browser).
+1. Run the Stage 7 build script to regenerate `docs/` from the latest outputs.
+2. Review locally (open `docs/index.html` in a browser).
 3. **Confirm with the user, then commit** the regenerated site (per the git
    rules in `CLAUDE.md`).
 4. The user pushes to GitHub; Pages redeploys automatically within a minute or
