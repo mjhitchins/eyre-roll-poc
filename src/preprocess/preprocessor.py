@@ -151,10 +151,10 @@ def preprocess_image(
 
     img = _load(input_path)
     grey = to_greyscale(img)
-    enhanced = apply_clahe(grey, clip_limit=clahe_clip, tile_size=clahe_tile)
-    angle = estimate_skew_angle(enhanced)
-    deskewed = deskew(enhanced, angle)
-    final = crop_to_content(deskewed, border_fraction=crop_border)
+    # Deskew and crop-to-content were found to corrupt AALT membrane images
+    # (over-rotation and text loss). For court-hand rolls, AALT photos are
+    # already well-framed. CLAHE alone is the safe conservative choice.
+    final = apply_clahe(grey, clip_limit=clahe_clip, tile_size=clahe_tile)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     ok = cv2.imwrite(str(output_path), final)
@@ -167,16 +167,15 @@ def preprocess_image(
         "output": str(output_path),
         "input_shape_hwc": list(img.shape),
         "output_shape_hw": list(final.shape),
-        "skew_angle_deg": round(angle, 3),
+        "skew_angle_deg": 0.0,
         "clahe_clip": clahe_clip,
         "clahe_tile": clahe_tile,
-        "crop_border_fraction": crop_border,
+        "crop_border_fraction": 0.0,
     }
     logger.info(
-        "Preprocessed %s → %s (skew=%.2f°, out %dx%d)",
+        "Preprocessed %s → %s (out %dx%d)",
         input_path.name,
         output_path.name,
-        angle,
         final.shape[1],
         final.shape[0],
     )

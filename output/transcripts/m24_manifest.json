@@ -1,0 +1,12 @@
+{
+  "timestamp_utc": "20260626T161827",
+  "membrane_ref": "m24",
+  "source_image": "/Users/mark/work/whatever/eyre-roll-poc/data/images_clean/m24.jpg",
+  "transcript_path": "/Users/mark/work/whatever/eyre-roll-poc/output/transcripts/m24.txt",
+  "model": "/Users/mark/work/whatever/eyre-roll-poc/models/catmus-medieval.mlmodel",
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}
