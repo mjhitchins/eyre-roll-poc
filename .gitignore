@@ -7,6 +7,13 @@ env/
 data/images_raw/
 data/images_clean/
 
+# enlarger/ is a standalone image-enhancement tool (not wired into the
+# pipeline); its downloaded/processed output is regenerable, never commit it
+enlarger/out/
+enlarger/*/out/
+enlarger/_downloaded/
+enlarger/*/_downloaded/
+
 # Kraken HTR model files — large binaries, download via MODELS.md
 models/
 *.mlmodel
