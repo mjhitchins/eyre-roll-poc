@@ -23,7 +23,11 @@
   #loading    { color: #888; font-style: italic; margin-top: 2rem; }
   #error      { color: #c00; display: none; margin-top: 1rem; }
   a           { color: #3a5c3a; }
+  #map        { height: 420px; width: 100%; margin-top: 0.5rem; border: 1px solid #ddd; }
+  .hundred-marker { background: #3a5c3a; border: 2px solid #28402a; border-radius: 50%; opacity: 0.85; }
+  .leaflet-popup-content { font-family: Georgia, serif; font-size: 0.85rem; }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 
@@ -50,6 +54,10 @@
   <div class="stat-box"><div class="stat-num" id="stat-built">—</div><div class="stat-label">database built</div></div>
 </div>
 
+<h2>Hundreds</h2>
+<div id="map"></div>
+<p id="map-caption" style="font-size:0.78rem;color:#555;margin-top:0.4rem;"></p>
+
 <h2>Offence Types</h2>
 <table id="tbl-offences"></table>
 
@@ -72,8 +80,36 @@
   Source code: <a href="https://github.com/mjhitchins/eyre-roll-poc">github.com/mjhitchins/eyre-roll-poc</a>.
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sql.js@1.12.0/dist/sql-wasm.js"></script>
 <script>
+// Minimal RFC-4180-ish CSV parser: handles quoted fields, embedded commas,
+// embedded newlines, and doubled "" escapes — enough for hundreds.csv.
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(field); field = '';
+        if (row.length > 1 || row[0] !== '') rows.push(row);
+        row = [];
+      } else { field += c; }
+    }
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  const [header, ...rest] = rows;
+  return rest.map(r => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ''])));
+}
+
 (async () => {
   try {
     const SQL = await initSqlJs({
@@ -99,45 +135,40 @@
     document.getElementById('stat-membranes').textContent =
       q("SELECT COUNT(DISTINCT membrane_ref) AS n FROM pleas")[0].n;
     document.getElementById('stat-hundreds').textContent =
-      q("SELECT COUNT(DISTINCT hundred) AS n FROM pleas WHERE hundred != ''")[0].n;
+      q("SELECT COUNT(DISTINCT hundred_canonical) AS n FROM pleas WHERE hundred_canonical != ''")[0].n;
     const built = q("SELECT built_at FROM run_log ORDER BY id DESC LIMIT 1")[0];
     document.getElementById('stat-built').textContent =
       built ? built.built_at.slice(0, 10) : '—';
 
-    // --- Offences ---
-    const offences = q(
-      "SELECT offence_type, COUNT(*) AS n FROM pleas GROUP BY offence_type ORDER BY n DESC"
-    );
-    const maxO = Math.max(...offences.map(r => r.n), 1);
-    document.getElementById('tbl-offences').innerHTML =
-      '<tr><th>Offence type</th><th style="width:3em">Count</th><th></th></tr>' +
-      offences.map(r =>
-        `<tr><td>${r.offence_type || '<em>(unknown)</em>'}</td><td>${r.n}</td>` +
-        `<td><span class="bar" style="width:${(r.n / maxO * 140).toFixed(0)}px"></span></td></tr>`
-      ).join('');
+    // --- Plea data + filtering ---
+    const COLS  = ['membrane_ref','plea_num','hundred','hundred_canonical','party_1','party_2','offence_type','verdict','amercement_raw'];
+    const HEADS = ['Membrane','No.','Hundred (raw)','Hundred (identified)','Party 1','Party 2','Offence','Verdict','Amercement'];
 
-    // --- Verdicts ---
-    const verdicts = q(
-      "SELECT verdict, COUNT(*) AS n FROM pleas GROUP BY verdict ORDER BY n DESC"
-    );
-    const maxV = Math.max(...verdicts.map(r => r.n), 1);
-    document.getElementById('tbl-verdicts').innerHTML =
-      '<tr><th>Verdict</th><th style="width:3em">Count</th><th></th></tr>' +
-      verdicts.map(r =>
-        `<tr><td>${r.verdict || '<em>(none recorded)</em>'}</td><td>${r.n}</td>` +
-        `<td><span class="bar" style="width:${(r.n / maxV * 140).toFixed(0)}px"></span></td></tr>`
-      ).join('');
-
-    // --- Plea browser ---
-    const COLS  = ['membrane_ref','plea_num','hundred','party_1','party_2','offence_type','verdict','amercement_raw'];
-    const HEADS = ['Membrane','No.','Hundred','Party 1','Party 2','Offence','Verdict','Amercement'];
-
-    let allRows = q(
+    const allRows = q(
       `SELECT ${COLS.join(',')} FROM pleas ORDER BY membrane_ref, CAST(plea_num AS INTEGER)`
     );
 
     function esc(s) {
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function groupCount(rows, col) {
+      const counts = new Map();
+      rows.forEach(r => {
+        const key = r[col] || '';
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    }
+
+    function renderBarTable(elId, label, emptyLabel, data) {
+      const max = Math.max(...data.map(([, n]) => n), 1);
+      document.getElementById(elId).innerHTML =
+        `<tr><th>${label}</th><th style="width:3em">Count</th><th></th></tr>` +
+        data.map(([key, n]) =>
+          `<tr><td>${key ? esc(key) : emptyLabel}</td><td>${n}</td>` +
+          `<td><span class="bar" style="width:${(n / max * 140).toFixed(0)}px"></span></td></tr>`
+        ).join('');
     }
 
     function renderPleas(rows) {
@@ -148,18 +179,85 @@
         ).join('');
     }
 
-    renderPleas(allRows);
+    function renderAll(rows) {
+      renderBarTable('tbl-offences', 'Offence type', '<em>(unknown)</em>', groupCount(rows, 'offence_type'));
+      renderBarTable('tbl-verdicts', 'Verdict', '<em>(none recorded)</em>', groupCount(rows, 'verdict'));
+      renderPleas(rows);
+    }
 
-    document.getElementById('filter').addEventListener('input', e => {
-      const term = e.target.value.toLowerCase();
-      renderPleas(term
-        ? allRows.filter(r => COLS.some(c => esc(r[c]).toLowerCase().includes(term)))
+    const filterInput = document.getElementById('filter');
+
+    function applyFilter(term) {
+      filterInput.value = term;
+      const needle = term.toLowerCase();
+      renderAll(needle
+        ? allRows.filter(r => COLS.some(c => esc(r[c]).toLowerCase().includes(needle)))
         : allRows
       );
+    }
+
+    renderAll(allRows);
+    filterInput.addEventListener('input', e => applyFilter(e.target.value));
+
+    // --- Hundreds map ---
+    // hundreds.csv is built by Stage 6 (src/collate/collator.py:build_hundred_summary)
+    // joining each plea's raw manuscript "hundred" spelling, through the
+    // hand-curated data/hundred_lookup.csv, to a canonical historic hundred
+    // and (where sourced — see data/hundred_coords.csv) an approximate
+    // chief-town coordinate. Rows with status "unresolved" have no
+    // coordinate and are deliberately not plotted.
+    const hundredsResp = await fetch('hundreds.csv');
+    if (!hundredsResp.ok) throw new Error(`fetch failed: ${hundredsResp.status}`);
+    const hundreds = parseCSV(await hundredsResp.text());
+
+    const mappedHundreds = hundreds.filter(h => h.status === 'mapped');
+    const unresolvedHundreds = hundreds.filter(h => h.status !== 'mapped');
+
+    const DEFAULT_CENTER = [51.83, -2.25];
+    const DEFAULT_ZOOM = 9;
+    const map = L.map('map', { scrollWheelZoom: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const maxCount = Math.max(...mappedHundreds.map(h => Number(h.plea_count)), 1);
+    mappedHundreds.forEach(h => {
+      const n = Number(h.plea_count);
+      const latlon = [Number(h.lat), Number(h.lon)];
+      const radius = 5 + 14 * Math.sqrt(n / maxCount);
+      const marker = L.circleMarker(latlon, { radius, className: 'hundred-marker' }).addTo(map);
+      marker.bindPopup(
+        `<strong>${h.canonical_hundred}</strong><br>` +
+        `${n} plea${n === 1 ? '' : 's'} &middot; near ${h.proxy_place}<br>` +
+        `<span style="color:#555">${h.source_note}</span><br>` +
+        `<a href="#tbl-pleas">Show these pleas below &darr;</a>`
+      );
+      // Clicking a hundred both filters the tables below to it and zooms
+      // the map in on it; the popup (bound above) opens at the same time.
+      marker.on('click', () => {
+        map.flyTo(latlon, 12, { duration: 0.5 });
+        applyFilter(h.canonical_hundred);
+        document.getElementById('tbl-pleas').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
+
+    document.getElementById('map-caption').innerHTML =
+      `${mappedHundreds.length} of ${hundreds.length} historic hundreds plotted here as ` +
+      `an approximate chief-town/village point, sized by plea count — not a ` +
+      `reconstructed hundred boundary. Click a point to zoom in and filter the ` +
+      `tables below to that hundred (clear the search box to reset). ` +
+      (unresolvedHundreds.length
+        ? `${unresolvedHundreds.length} name${unresolvedHundreds.length === 1 ? '' : 's'} ` +
+          `(${unresolvedHundreds.map(h => `${h.canonical_hundred}, ${h.plea_count} plea${h.plea_count === '1' ? '' : 's'}`).join('; ')}) ` +
+          `could not yet be matched to a known hundred with confidence and are omitted pending further research (see data/hundred_lookup.csv).`
+        : '');
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display  = '';
+    // #map was built while #content was display:none (zero-size container),
+    // so Leaflet needs to re-measure now that it's actually visible.
+    map.invalidateSize();
 
   } catch (err) {
     document.getElementById('loading').style.display = 'none';

@@ -1,0 +1,24 @@
+canonical_hundred,plea_count,status,lat,lon,proxy_place,source_note
+Berkeley,47,mapped,51.6898,-2.4590,Berkeley,chief town of the hundred
+Langley and Swinehead,46,mapped,51.5181,-2.5057,Winterbourne,"VCH Gloucestershire vol. 14: hundred lies SW of Gloucester near Bristol, Upper division = Bitton/Doynton/Frampton Cotterell/Winterbourne/part of Alveston, Lower division = Littleton-upon-Severn/Olveston/Rockhampton; the ""Langley"" and ""Swineshead"" raw headings are both this one hundred and are combined into a single point here"
+Cirencester,29,mapped,51.7190,-1.9690,Cirencester,"Maitland's own introduction (m38d.txt) names this directly as ""the hundred of Cirencester"""
+Dudstone and King's Barton,28,mapped,51.8642,-2.2382,Gloucester,King's Barton was a suburb of Gloucester; proxied by the city centre
+Botloe,27,mapped,51.9310,-2.4057,Newent,"VCH: hundred centred on Newent, NW Gloucestershire"
+Bradley,27,mapped,51.8187,-1.8386,Northleach,"VCH vol. 11: Bradley hundred is bounded by Kiftsgate/Deerhurst/Slaughter/Rapsgate/Cheltenham, containing Northleach, Hampnett, Farmington etc — NOT the hamlet of Bradley near Wotton-under-Edge (that is in Berkeley hundred, a name collision caught and corrected during sourcing)"
+Kiftsgate,24,mapped,52.0506,-1.7805,Chipping Campden,"Maitland's own introduction (m38d.txt) names this directly as ""Kiftsgate hundred"""
+Holeford,22,unresolved,,,,
+Slaughter,18,mapped,51.8767,-1.7442,Bourton-on-the-Water,"VCH vol. 6: Slaughter hundred includes Bourton-on-the-Water, Upper/Lower Slaughter, Naunton etc"
+Bledisloe,16,mapped,51.7868,-2.4780,Awre,"VCH vol. 5: Bledisloe hundred comprised Awre manor and its members (Blakeney, Etloe, Purton)"
+Cheltenham,16,mapped,51.8994,-2.0783,Cheltenham,chief town of the hundred
+Longtree,15,mapped,51.6256,-2.1611,Tetbury,"VCH vol. 11: Longtree hundred includes Tetbury, Avening, Minchinhampton, Woodchester"
+Deerhurst,13,mapped,51.9803,-2.1870,Deerhurst,chief village of the hundred
+Grumbald's Ash,12,mapped,51.5375,-2.3903,Chipping Sodbury,"Wikishire/VCH: Lower division includes Chipping Sodbury, Old Sodbury, Tormarton, Dyrham"
+Bisley,11,mapped,51.7657,-2.1535,Bisley,chief village of the hundred
+Whitstone,11,mapped,51.7730,-2.3120,Whitminster,"VCH vol. 10: Whitstone hundred's 16 parishes include Whitminster/Wheatenhurst, Standish, Frampton-on-Severn"
+UNIDENTIFIED,10,unresolved,,,,
+Tibaldstone,10,mapped,52.0145,-2.0225,Beckford,"known hundred containing Ashton-under-Hill, Beckford, Hinton-on-the-Green"
+Rapsgate,9,mapped,51.8607,-2.0167,Colesbourne,Survey of English Place-Names / VCH vol. 7: the hundred view was held at Rapsgate in the south part of Colesbourne parish
+Pucklechurch,4,mapped,51.4802,-2.4472,Pucklechurch,chief village of the hundred
+Thornbury,4,mapped,51.6058,-2.5235,Thornbury,chief town of the hundred
+Henbury,1,mapped,51.5090,-2.6210,Henbury (Bristol),"ASSUMED identification (user-supplied 2026-10-06) for raw heading ""Aggeniede""/""Agemede"" — pending Domesday Book cross-reference, not independently verified"
+Tewkesbury,1,mapped,51.9933,-2.1573,Tewkesbury,chief town of the hundred

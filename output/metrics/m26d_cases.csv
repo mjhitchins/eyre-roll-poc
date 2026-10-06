@@ -1,16 +1,16 @@
 membrane_ref,plea_num,hundred,party_1,party_2,offence_latin,offence_type,verdict,amercement_raw,plea_text_snippet
-m26d,112,,,,,unknown,,,"112. Due filie Jacobi de Novo Mercato sunt de dono domini Regis et una maritata est Johanni de Botereus, et alia filio J"
-m26d,113,,,,,unknown,quietus est,,"113. Walterus de Andebiria obrutus fuit careta sua chargiata blado; nullus malecreditur ; Judicium, — infor- tunium ; pr"
-m26d,114,,Willelmus de Derham clericus et Petrus le Englois,,occidit,homicide,in misericordia,,114. Willelmus de Derham clericus et Petrus le Englois occiderunt Wulnothum de Tormertone in chemino infra hundredum de 
-m26d,115,,Walterus filius Ade occisus,,occisus/occisa fuit,homicide-unknown-killer,murdrum,,"115. Walterus filius Ade occisus fuit in reditu cervisie de Badintone, et Baldwinus Kyrie de comitatu Wiltesire exig mal"
-m26d,118,,,,occisus/occisa fuit,homicide-unknown-killer,,3^,118. Gaufridus Hathemere occisus fuit careta sua propria apud Hildeslege ita quod obiit infra octavum diem; nullus malec
-m26d,119,,"Ailricus de Haukesbiry occisus fuit a latronibus in domo sua de nocte, nescitur ",,occisus/occisa fuit,homicide-unknown-killer,murdrum,,"119. Ailricus de Haukesbiry occisus fuit a latronibus in domo sua de nocte, nescitur a quibus ; nullus malecreditur ; ' "
-m26d,120,,,,,unknown,,4^,120. Vincentius serviens Willelmi Brivvere cecidit de equo suo apud Derham ita quod obiit in crastino. Nullus alius do d
-m26d,121,,"Adam le Maunscl occisus fuit, et Walterus serviens Thome Capellani de Litletone ",,occisus/occisa fuit,homicide-unknown-killer,murdrum,,"121. Adam le Maunscl occisus fuit, et Walterus serviens Thome Capellani de Litletone captus fuit pro morte et ductus cor"
-m26d,122,,,,,unknown,suspensus,,122. 1 Thomas prepositus de Derham et Adam de Here- warde Osebernus de Littletone quos .... mercator appel- lavit de soc
-m26d,123,,,,,unknown,nichil,,123. Manerium de Guderintone nichil dicit quod alibi dictum non sit. Manerium de Wika.
-m26d,124,,[B] Walterus Cole,,appellavit de morte,appeal-of-death,murdrum,,124.[B] Walterus Cole occidit Simonem de Wapeleya et idem Simon repercussit eundem Walterum et uterque ' Not in B. « th'
-m26d,125,,,,,unknown,nichil,,125. Manerium de Sowbyr nichil aliud dicit quod alibi dictum non sit. Hiindrediim de Bernetre Hambyria.
+m26d,112,Gnmbodeshe,,,,unknown,,,"112. Due filie Jacobi de Novo Mercato sunt de dono domini Regis et una maritata est Johanni de Botereus, et alia filio J"
+m26d,113,Gnmbodeshe,,,,unknown,quietus est,,"113. Walterus de Andebiria obrutus fuit careta sua chargiata blado; nullus malecreditur ; Judicium, — infor- tunium ; pr"
+m26d,114,Gnmbodeshe,Willelmus de Derham clericus et Petrus le Englois,,occidit,homicide,in misericordia,,114. Willelmus de Derham clericus et Petrus le Englois occiderunt Wulnothum de Tormertone in chemino infra hundredum de 
+m26d,115,Gnmbodeshe,Walterus filius Ade occisus,,occisus/occisa fuit,homicide-unknown-killer,murdrum,,"115. Walterus filius Ade occisus fuit in reditu cervisie de Badintone, et Baldwinus Kyrie de comitatu Wiltesire exig mal"
+m26d,118,Gnmbodeshe,,,occisus/occisa fuit,homicide-unknown-killer,,3^,118. Gaufridus Hathemere occisus fuit careta sua propria apud Hildeslege ita quod obiit infra octavum diem; nullus malec
+m26d,119,Gnmbodeshe,"Ailricus de Haukesbiry occisus fuit a latronibus in domo sua de nocte, nescitur ",,occisus/occisa fuit,homicide-unknown-killer,murdrum,,"119. Ailricus de Haukesbiry occisus fuit a latronibus in domo sua de nocte, nescitur a quibus ; nullus malecreditur ; ' "
+m26d,120,Gnmbodeshe,,,,unknown,,4^,120. Vincentius serviens Willelmi Brivvere cecidit de equo suo apud Derham ita quod obiit in crastino. Nullus alius do d
+m26d,121,Gnmbodeshe,"Adam le Maunscl occisus fuit, et Walterus serviens Thome Capellani de Litletone ",,occisus/occisa fuit,homicide-unknown-killer,murdrum,,"121. Adam le Maunscl occisus fuit, et Walterus serviens Thome Capellani de Litletone captus fuit pro morte et ductus cor"
+m26d,122,Gnmbodeshe,,,,unknown,suspensus,,122. 1 Thomas prepositus de Derham et Adam de Here- warde Osebernus de Littletone quos .... mercator appel- lavit de soc
+m26d,123,Gnmbodeshe,,,,unknown,nichil,,123. Manerium de Guderintone nichil dicit quod alibi dictum non sit. Manerium de Wika.
+m26d,124,Gnmbodeshe,[B] Walterus Cole,,appellavit de morte,appeal-of-death,murdrum,,124.[B] Walterus Cole occidit Simonem de Wapeleya et idem Simon repercussit eundem Walterum et uterque ' Not in B. « th'
+m26d,125,Gnmbodeshe,,,,unknown,nichil,,125. Manerium de Sowbyr nichil aliud dicit quod alibi dictum non sit. Hiindrediim de Bernetre Hambyria.
 m26d,126,Bernetre Hambyria,,,,unknown,,5^,126. [B] Willelmus de Aumundesbiria cecidit de quadam do dand equa sua et pependit per stiveram ita quod obiit. Nullus i
 m26d,127,Bernetre Hambyria,[B] Quidam David de Westbiria arestatus fuit pro quodam rapo et commissus fuit W,,,unknown,loquendum,,127. [B] Quidam David de Westbiria arestatus fuit pro quodam rapo et commissus fuit Willelmo Walensi de West- biria et t
 m26d,128,Bernetre Hambyria,[B] Johannes le Rus clericus,"Nicolaum '""' Interlined. ^— ^ Struck out. Bunte quodam rastello",occidit,homicide,murdrum,"12™; 3""","128. [B] Johannes le Rus clericus occidit Nicolaum '""' Interlined. ^— ^ Struck out. Bunte quodam rastello et fugit et po"

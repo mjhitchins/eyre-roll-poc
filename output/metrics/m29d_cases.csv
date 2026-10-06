@@ -1,8 +1,8 @@
 membrane_ref,plea_num,hundred,party_1,party_2,offence_latin,offence_type,verdict,amercement_raw,plea_text_snippet
-m29d,278,,Malefactores,,occidit,homicide,,,278. Malefactores venerunt de nocte ad domum Osberti filii Thurkilli et occiderunt ipsum Osbertum et Walterum filiuin su
-m29d,279,,Malefactores,,occidit,homicide,,,279. Malefactores venerunt ad domum Cristred de Puk- elecherche et occiderunt Walterum filium suum et Aliciam et Cristia
-m29d,280,,Malefactores,,occidit,homicide,murdrum,6S,280. Malefactores venerunt ad domum Domini Bathon et occiderunt Walterum de Tracy servientem suum ; et Walterus de la Fo
-m29d,281,,Theobaldus homo Willelmi Wallerand,Hugonem Gule,appellavit de pace,appeal-of-breach-of-peace,in misericordia,5^,281. Theobaldus homo Willelmi Wallerand appellavit Hugonem Gule de pace domini Regis et de plagis ; et Theobaldus venit 
+m29d,278,Pukelecherche Grumb,Malefactores,,occidit,homicide,,,278. Malefactores venerunt de nocte ad domum Osberti filii Thurkilli et occiderunt ipsum Osbertum et Walterum filiuin su
+m29d,279,Pukelecherche Grumb,Malefactores,,occidit,homicide,,,279. Malefactores venerunt ad domum Cristred de Puk- elecherche et occiderunt Walterum filium suum et Aliciam et Cristia
+m29d,280,Pukelecherche Grumb,Malefactores,,occidit,homicide,murdrum,6S,280. Malefactores venerunt ad domum Domini Bathon et occiderunt Walterum de Tracy servientem suum ; et Walterus de la Fo
+m29d,281,Pukelecherche Grumb,Theobaldus homo Willelmi Wallerand,Hugonem Gule,appellavit de pace,appeal-of-breach-of-peace,in misericordia,5^,281. Theobaldus homo Willelmi Wallerand appellavit Hugonem Gule de pace domini Regis et de plagis ; et Theobaldus venit 
 m29d,282,Berkelay,Ricardus clericus de Slumbruge,Willelmum Lunerium,occidit,homicide,murdrum,,282. Ricardus clericus de Slumbruge occidit Willelmum Lunerium et fugit et fuit itinerans ^ ; nullus alius male- exig cr
 m29d,283,Berkelay,,,occisus/occisa fuit,homicide-unknown-killer,,2d,283. Adam fihus Willelmi de Coulege occisus fuit per rotam molendini de Coulege ; nullus inventor presentatus est et vil
 m29d,284,Berkelay,Adam de Hulmanecote,Ricardum,occidit,homicide,murdrum,,"284. Adam de Hulmanecote occidit Ricardum de Drai- cote et fugit, et fuit in franco plegio villate de Hul- ' Substituted"

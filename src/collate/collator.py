@@ -7,6 +7,14 @@ The database is the canonical output for the publish stage and analysis.
 Tables:
   pleas    — one row per plea entry
   run_log  — build metadata (timestamp, membranes included, plea count)
+
+Also builds output/hundreds.csv: raw "hundred" manuscript spellings, grouped
+into the canonical historic hundred they refer to and (where known) an
+approximate map coordinate — see data/hundred_lookup.csv and
+data/hundred_coords.csv, both hand-curated and source-noted. This join is
+recomputed fresh from the current database every run, rather than caching
+plea counts in a hand-edited file, so the map never goes stale relative to
+the pipeline's actual output.
 """
 
 from __future__ import annotations
@@ -22,6 +30,7 @@ CREATE TABLE IF NOT EXISTS pleas (
     membrane_ref      TEXT NOT NULL,
     plea_num          TEXT,
     hundred           TEXT,
+    hundred_canonical TEXT,
     party_1           TEXT,
     party_2           TEXT,
     offence_latin     TEXT,
@@ -87,3 +96,95 @@ def build_database(csv_paths: list[Path], db_path: Path) -> int:
     con.commit()
     con.close()
     return len(all_rows)
+
+
+_HUNDRED_SUMMARY_FIELDS = [
+    "canonical_hundred", "plea_count", "status",
+    "lat", "lon", "proxy_place", "source_note",
+]
+
+
+def _load_hundred_lookup(lookup_path: Path) -> dict[str, str]:
+    lookup: dict[str, str] = {}
+    with lookup_path.open(encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            lookup[row["raw_value"]] = row["canonical_hundred"]
+    return lookup
+
+
+def annotate_canonical_hundred(db_path: Path, lookup_path: Path) -> int:
+    """
+    Populate pleas.hundred_canonical from the raw hundred field via
+    data/hundred_lookup.csv, so client code (e.g. the docs/ map) can filter
+    or join on the identified hundred without re-implementing the lookup.
+
+    A raw value with no lookup entry is left as the literal raw value
+    (visibly distinct/unresolved, never silently blanked) — same policy as
+    build_hundred_summary.
+    """
+    lookup = _load_hundred_lookup(lookup_path)
+
+    con = sqlite3.connect(db_path)
+    rows = con.execute("SELECT id, hundred FROM pleas WHERE hundred != ''").fetchall()
+    con.executemany(
+        "UPDATE pleas SET hundred_canonical = ? WHERE id = ?",
+        [(lookup.get(raw, raw), pid) for pid, raw in rows],
+    )
+    con.commit()
+    con.close()
+    return len(rows)
+
+
+def build_hundred_summary(
+    db_path: Path, lookup_path: Path, coords_path: Path, out_path: Path
+) -> list[dict]:
+    """
+    Group plea counts by canonical historic hundred and attach a map
+    coordinate where one is known.
+
+    raw "hundred" value --(data/hundred_lookup.csv)--> canonical hundred
+                         --(data/hundred_coords.csv)--> lat/lon (if known)
+
+    A raw value missing from the lookup, or a canonical hundred missing from
+    the coordinates table, is still included in the output with
+    status="unresolved" and blank lat/lon — it is never silently dropped or
+    given a guessed location.
+    """
+    lookup = _load_hundred_lookup(lookup_path)
+
+    coords: dict[str, dict] = {}
+    with coords_path.open(encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            coords[row["canonical_hundred"]] = row
+
+    con = sqlite3.connect(db_path)
+    raw_counts = con.execute(
+        "SELECT hundred, COUNT(*) AS n FROM pleas WHERE hundred != '' GROUP BY hundred"
+    ).fetchall()
+    con.close()
+
+    totals: dict[str, int] = {}
+    for raw_hundred, n in raw_counts:
+        canonical = lookup.get(raw_hundred, f"UNMAPPED RAW VALUE: {raw_hundred}")
+        totals[canonical] = totals.get(canonical, 0) + n
+
+    summary = []
+    for canonical, plea_count in sorted(totals.items(), key=lambda kv: -kv[1]):
+        coord = coords.get(canonical)
+        summary.append({
+            "canonical_hundred": canonical,
+            "plea_count": plea_count,
+            "status": "mapped" if coord else "unresolved",
+            "lat": coord["lat"] if coord else "",
+            "lon": coord["lon"] if coord else "",
+            "proxy_place": coord["proxy_place"] if coord else "",
+            "source_note": coord["source_note"] if coord else "",
+        })
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=_HUNDRED_SUMMARY_FIELDS)
+        writer.writeheader()
+        writer.writerows(summary)
+
+    return summary

@@ -2,7 +2,8 @@
 Stage 5: Extract structured fields from Maitland ground-truth Latin text.
 
 Parses numbered plea entries and extracts:
-  - hundred         : hundred (or vill) the plea falls under
+  - hundred         : the historic hundred the plea falls under (raw manuscript
+                      spelling; canonicalised separately — see data/hundreds.csv)
   - party_1         : first named party (perpetrator, appellant, or victim)
   - party_2         : second named party (victim or appellee, where extractable)
   - offence_latin   : raw Latin offence phrase detected
@@ -13,8 +14,13 @@ Parses numbered plea entries and extracts:
 Detection is keyword-based on the formulaic Latin of 13th-century crown pleas.
 
 Hundred header OCR variants seen across membranes:
-  Htmdredum / Hnndrcdum / Hundrediim / Hundredum — all mean "Hundredum de X"
-  Adhuc de Hundredo de X — continuation of the same hundred across a membrane
+  Htmdredum / Hnndrcdum / Hundrediim / Hundredum / Hiindrediim / Hiindrcdo /
+  Htmdredum / Hundredufn / Hundrednni — all corruptions of "Hundredum de X"
+  Adhuc de Hundredo de X / Ad hue de Hiindrcdo de X / Adhiic de X (the
+  "Hundredo" token itself sometimes OCR'd away entirely) — continuation of
+  the same hundred across a membrane.
+  Villata de X. (a vill sub-heading) does NOT update the hundred — see
+  _build_location_map.
 """
 
 from __future__ import annotations
@@ -29,38 +35,109 @@ from pathlib import Path
 # Location (hundred / vill) detection
 # ---------------------------------------------------------------------------
 
-# Matches OCR-corrupted "Hundredum de X" and "Adhuc de Hundredo de X"
+# Matches a standalone heading line announcing a hundred, e.g.:
+#   "Hundredum de Kyftesiatc."         "Hiindrediim de Bernetre Hambyria."
+#   "Adhuc de Hundredo de Slochtre."   "Ad hue de Hiindrcdo de Berkdcge."
+#   "Adhiic de Hundredo TJieokesbirie."  (OCR sometimes drops the second "de")
+#
+# Anchored to the start/end of the line (MULTILINE) so it does NOT match
+# "Hundredum"/"Hundredo" appearing mid-sentence in plea narrative, e.g.
+# "...et Hundredum de Hanbiria secutus fuit eum cum clamore..." (a hue-and-cry
+# phrase, not a section heading) — that false-positive match was the original
+# bug: it let narrative text leak into the hundred field.
+#
+# The "Hundredum" token itself is OCR'd wildly inconsistently (Htmdredum,
+# Hnndrcdum, Hundrediim, Hundrednni, Hundredufn, Hiindrcdtun, Hundredo, ...)
+# so it's matched loosely as H + 2-10 word chars rather than an exact suffix
+# list. The hundred *name* is still required to be a run of capitalised
+# words, which is what keeps a dropped-"de" heading like "Hundredo
+# TJieokesbirie." from also swallowing trailing lowercase narrative.
 _HUNDRED_RE = re.compile(
     r"""
+    ^\s*
     (?:
-        H\w{0,6}d(?:um|iim|urn)\s+de   # Hundredum / Htmdredum / Hundrediim etc.
-      | Adhuc\s+de\s+Hundredo\s+de      # continuation: Adhuc de Hundredo de X
+        (?:(?i:Ad\s*\w{0,6}\s+de)\s+)?    # optional continuation: Adhuc/Ad hue/AdJiiic de
+        H\w{2,10}                        # corrupted Hundredum/Hundredo/... token
+                                          # (capital H only — a lowercase "h..." is body
+                                          # text or a footnote cross-reference like
+                                          # "hachia B.", not a heading)
+        [\'\^]*\s+                       # trailing OCR junk, then whitespace
+        (?:(?i:de)\s+)?                  # "de" (sometimes dropped by OCR)
+      |
+        (?i:Ad\s*\w{0,6}\s+de)\s+        # continuation with the Hundredum/-o token itself
+                                          # OCR'd away entirely, e.g. "Adhiic de Stvinesheved."
     )
-    \s+([\w\s]+?)                        # the hundred name
-    [\.\n^']                             # terminated by period, newline or OCR junk
+    (?P<name>
+        [A-Z][\w']*
+        (?:\s+(?i:et\s+)?(?i:de\s+)?[A-Z][\w']*){0,3}
+    )
+    \s*[\.\^'\\]*\s*$
     """,
-    re.IGNORECASE | re.VERBOSE,
+    re.VERBOSE | re.MULTILINE,
 )
 
-# Standalone "Villata de X." on its own line — marks a vill sub-section
-_VILL_RE = re.compile(
-    r"^Villata\s+de\s+([\w\s]+?)\s*\.\s*$",
-    re.IGNORECASE | re.MULTILINE,
+# A membrane's text occasionally opens with "Villata de X." instead of a
+# "Hundredum de X." heading (seen in m27.txt: "Villata de Thornebiric." is
+# the file's very first line, standing in for the usual hundred heading).
+# Only the *opening* line of a membrane is treated this way — every other
+# "Villata de X." in the body is a genuine vill sub-heading and must NOT
+# override the governing hundred (see _build_location_map docstring).
+_OPENING_VILL_RE = re.compile(
+    r"""
+    \A\s*
+    Villata\s+(?:de\s+)?
+    (?P<name>[A-Z][\w']*(?:\s+(?:et\s+)?(?:de\s+)?[A-Z][\w']*){0,3})
+    """,
+    re.VERBOSE,
 )
+
+
+def _preceded_by_list_continuation(text: str, pos: int) -> bool:
+    """
+    True if the nearest preceding non-blank line ends with a comma.
+
+    A genuine hundred heading is never a continuation of a comma-separated
+    list. This catches a specific false positive: a wrapped juror-name list
+    whose last name happens to land alone on its own line and happens to
+    start with a capital H of plausible length, e.g. "Henricus de Monte ^."
+    at the end of "..., Rannulfus de Quentone, Henricus de Monte ^." — read
+    in isolation that line is syntactically identical to a real heading like
+    "Hundredum de Monte.", but the preceding line's trailing comma shows it's
+    really the tail of a name list, not a new section.
+    """
+    prior_text = text[:pos]
+    for line in reversed(prior_text.splitlines()):
+        stripped = line.strip()
+        if stripped:
+            return stripped.endswith(",")
+    return False
 
 
 def _build_location_map(text: str) -> list[tuple[int, str]]:
     """
-    Return a list of (char_position, location_name) in document order.
-    Each plea is assigned the most recent location before its start.
+    Return a list of (char_position, hundred_name) in document order.
+    Each plea is assigned the most recent *hundred* heading before its start.
+
+    Villata (vill) sub-headings are deliberately excluded here: a vill like
+    "Villata de Neivenham." is a sub-section of whichever hundred was last
+    declared, not a hundred in its own right, and the 23 historic
+    Gloucestershire hundreds are a closed, identifiable list (see
+    data/hundreds.csv) that a vill name cannot be matched against. Folding
+    vill headings into this field would produce unidentifiable pseudo-hundreds.
+    The vill heading itself is still preserved verbatim in plea_text_snippet.
+    The one exception is the membrane's opening line — see _OPENING_VILL_RE.
     """
     locations: list[tuple[int, str]] = []
     for m in _HUNDRED_RE.finditer(text):
+        if _preceded_by_list_continuation(text, m.start()):
+            continue
         name = re.sub(r"\s+", " ", m.group(1)).strip()
         locations.append((m.start(), name))
-    for m in _VILL_RE.finditer(text):
-        name = re.sub(r"\s+", " ", m.group(1)).strip()
-        locations.append((m.start(), name))
+
+    opening = _OPENING_VILL_RE.match(text)
+    if opening:
+        name = re.sub(r"\s+", " ", opening.group("name")).strip()
+        locations.append((0, name))
     return sorted(locations, key=lambda x: x[0])
 
 
