@@ -18,6 +18,8 @@
   th          { background: #f4f4f4; font-size: 0.78rem; }
   tr:nth-child(even) { background: #fafafa; }
   .bar        { display: inline-block; background: #5a7a5a; height: 0.9em; vertical-align: middle; margin-left: 0.4em; }
+  .clickable-row { cursor: pointer; }
+  .clickable-row:hover { background: #eef3ee; }
   #filter     { width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; border: 1px solid #ccc; }
   .note       { font-size: 0.78rem; color: #555; border-left: 3px solid #bbb; padding: 0.5rem 0.75rem; margin-top: 2rem; line-height: 1.6; }
   #loading    { color: #888; font-style: italic; margin-top: 2rem; }
@@ -57,6 +59,7 @@
 <h2>Hundreds</h2>
 <div id="map"></div>
 <p id="map-caption" style="font-size:0.78rem;color:#555;margin-top:0.4rem;"></p>
+<table id="tbl-hundreds"></table>
 
 <h2>Offence Types</h2>
 <table id="tbl-offences"></table>
@@ -242,6 +245,16 @@ function parseCSV(text) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
+    // Clicking a hundred (a map marker or a row in #tbl-hundreds) filters the
+    // tables below to it, and zooms the map in when a coordinate is known.
+    function selectHundred(h) {
+      if (h.status === 'mapped') {
+        map.flyTo([Number(h.lat), Number(h.lon)], 12, { duration: 0.5 });
+      }
+      applyFilter(h.canonical_hundred);
+      document.getElementById('tbl-pleas').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     const maxCount = Math.max(...mappedHundreds.map(h => Number(h.plea_count)), 1);
     mappedHundreds.forEach(h => {
       const n = Number(h.plea_count);
@@ -254,25 +267,44 @@ function parseCSV(text) {
         `<span style="color:#555">${h.source_note}</span><br>` +
         `<a href="#tbl-pleas">Show these pleas below &darr;</a>`
       );
-      // Clicking a hundred both filters the tables below to it and zooms
-      // the map in on it; the popup (bound above) opens at the same time.
-      marker.on('click', () => {
-        map.flyTo(latlon, 12, { duration: 0.5 });
-        applyFilter(h.canonical_hundred);
-        document.getElementById('tbl-pleas').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+      // The popup (bound above) opens at the same time as the click handler fires.
+      marker.on('click', () => selectHundred(h));
     });
 
     document.getElementById('map-caption').innerHTML =
       `${mappedHundreds.length} of ${hundreds.length} historic hundreds plotted here as ` +
       `an approximate chief-town/village point, sized by plea count — not a ` +
-      `reconstructed hundred boundary. Click a point to zoom in and filter the ` +
-      `tables below to that hundred (clear the search box to reset). ` +
+      `reconstructed hundred boundary. Click a point, or a row in the table below, ` +
+      `to filter the pleas/offences/verdicts tables to that hundred (clear the ` +
+      `search box to reset). ` +
       (unresolvedHundreds.length
         ? `${unresolvedHundreds.length} name${unresolvedHundreds.length === 1 ? '' : 's'} ` +
           `(${unresolvedHundreds.map(h => `${h.canonical_hundred}, ${h.plea_count} plea${h.plea_count === '1' ? '' : 's'}`).join('; ')}) ` +
-          `could not yet be matched to a known hundred with confidence and are omitted pending further research (see data/hundred_lookup.csv).`
+          `could not yet be matched to a known hundred with confidence and are omitted from the map pending further research (see data/hundred_lookup.csv), but are still listed in the table below.`
         : '');
+
+    // Table of hundreds with their total plea/offence count — same data as
+    // the map, in plain-table form, sorted highest first. Includes the
+    // unresolved names (no map point) for completeness.
+    document.getElementById('tbl-hundreds').innerHTML =
+      '<tr><th>Hundred</th><th style="width:4em">Offences</th><th></th><th></th></tr>' +
+      hundreds
+        .slice()
+        .sort((a, b) => Number(b.plea_count) - Number(a.plea_count))
+        .map(h => {
+          const n = Number(h.plea_count);
+          const bar = `<span class="bar" style="width:${(n / maxCount * 140).toFixed(0)}px"></span>`;
+          const status = h.status === 'mapped' ? '' : '<em style="color:#999">unresolved</em>';
+          return `<tr class="clickable-row" data-hundred="${esc(h.canonical_hundred)}">` +
+                 `<td>${esc(h.canonical_hundred)}</td><td>${n}</td><td>${bar}</td><td>${status}</td></tr>`;
+        }).join('');
+
+    document.getElementById('tbl-hundreds').addEventListener('click', e => {
+      const row = e.target.closest('tr[data-hundred]');
+      if (!row) return;
+      const h = hundreds.find(x => x.canonical_hundred === row.dataset.hundred);
+      if (h) selectHundred(h);
+    });
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display  = '';
