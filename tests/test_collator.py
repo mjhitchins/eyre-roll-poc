@@ -192,6 +192,7 @@ class TestBuildHundredSummary:
         assert len(summary) == 1
         row = summary[0]
         assert row["canonical_hundred"] == "Berkeley"
+        assert row["raw_values"] == "Berkdcge; Berkelay"
         assert row["plea_count"] == 2
         assert row["status"] == "mapped"
         assert row["lat"] == "51.69"
@@ -220,7 +221,8 @@ class TestBuildHundredSummary:
         summary = build_hundred_summary(db_path, lookup_path, coords_path, out_path)
 
         assert summary == [{
-            "canonical_hundred": "UNIDENTIFIED", "plea_count": 1, "status": "unresolved",
+            "canonical_hundred": "UNIDENTIFIED", "raw_values": "Bernetre Hambyria",
+            "plea_count": 1, "status": "unresolved",
             "lat": "", "lon": "", "proxy_place": "", "source_note": "",
         }]
 

@@ -287,7 +287,8 @@ function parseCSV(text) {
     // the map, in plain-table form, sorted highest first. Includes the
     // unresolved names (no map point) for completeness.
     document.getElementById('tbl-hundreds').innerHTML =
-      '<tr><th>Hundred</th><th style="width:4em">Offences</th><th></th><th></th></tr>' +
+      '<tr><th>Hundred (identified)</th><th>Raw manuscript spelling(s)</th>' +
+      '<th style="width:4em">Offences</th><th></th><th></th></tr>' +
       hundreds
         .slice()
         .sort((a, b) => Number(b.plea_count) - Number(a.plea_count))
@@ -296,7 +297,8 @@ function parseCSV(text) {
           const bar = `<span class="bar" style="width:${(n / maxCount * 140).toFixed(0)}px"></span>`;
           const status = h.status === 'mapped' ? '' : '<em style="color:#999">unresolved</em>';
           return `<tr class="clickable-row" data-hundred="${esc(h.canonical_hundred)}">` +
-                 `<td>${esc(h.canonical_hundred)}</td><td>${n}</td><td>${bar}</td><td>${status}</td></tr>`;
+                 `<td>${esc(h.canonical_hundred)}</td><td>${esc(h.raw_values)}</td>` +
+                 `<td>${n}</td><td>${bar}</td><td>${status}</td></tr>`;
         }).join('');
 
     document.getElementById('tbl-hundreds').addEventListener('click', e => {

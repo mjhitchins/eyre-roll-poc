@@ -110,7 +110,7 @@ def build_database(csv_paths: list[Path], db_path: Path) -> int:
 
 
 _HUNDRED_SUMMARY_FIELDS = [
-    "canonical_hundred", "plea_count", "status",
+    "canonical_hundred", "raw_values", "plea_count", "status",
     "lat", "lon", "proxy_place", "source_note",
 ]
 
@@ -183,8 +183,9 @@ def build_hundred_summary(
     db_path: Path, lookup_path: Path, coords_path: Path, out_path: Path
 ) -> list[dict]:
     """
-    Group plea counts by canonical historic hundred and attach a map
-    coordinate where one is known.
+    Group plea counts by canonical historic hundred, retaining which raw
+    manuscript spelling(s) fed into each one, and attach a map coordinate
+    where one is known.
 
     raw "hundred" value --(data/hundred_lookup.csv)--> canonical hundred
                          --(data/hundred_coords.csv)--> lat/lon (if known)
@@ -208,15 +209,18 @@ def build_hundred_summary(
     con.close()
 
     totals: dict[str, int] = {}
+    raw_values: dict[str, list[str]] = {}
     for raw_hundred, n in raw_counts:
         canonical = lookup.get(raw_hundred, f"UNMAPPED RAW VALUE: {raw_hundred}")
         totals[canonical] = totals.get(canonical, 0) + n
+        raw_values.setdefault(canonical, []).append(raw_hundred)
 
     summary = []
     for canonical, plea_count in sorted(totals.items(), key=lambda kv: -kv[1]):
         coord = coords.get(canonical)
         summary.append({
             "canonical_hundred": canonical,
+            "raw_values": "; ".join(sorted(raw_values[canonical])),
             "plea_count": plea_count,
             "status": "mapped" if coord else "unresolved",
             "lat": coord["lat"] if coord else "",
