@@ -5,7 +5,12 @@ Tests for Stage 6: SQLite collation and the hundred lat/lon summary join.
 import csv
 import sqlite3
 
-from src.collate.collator import annotate_canonical_hundred, build_database, build_hundred_summary
+from src.collate.collator import (
+    annotate_aalt_image,
+    annotate_canonical_hundred,
+    build_database,
+    build_hundred_summary,
+)
 
 
 def _write_csv(path, rows, fields):
@@ -36,6 +41,67 @@ class TestBuildDatabase:
         con = sqlite3.connect(db_path)
         assert con.execute("SELECT COUNT(*) FROM pleas").fetchone()[0] == 2
         assert con.execute("SELECT plea_count FROM run_log").fetchone()[0] == 2
+
+
+class TestAnnotateAaltImage:
+    def test_fills_image_fields_for_every_plea_on_a_membrane(self, tmp_path):
+        db_path = tmp_path / "test.db"
+        _write_csv(
+            tmp_path / "m1_cases.csv",
+            [
+                {"membrane_ref": "m1", "plea_num": "1", "hundred": ""},
+                {"membrane_ref": "m1", "plea_num": "2", "hundred": ""},
+            ],
+            PLEA_FIELDS,
+        )
+        build_database([tmp_path / "m1_cases.csv"], db_path)
+
+        concordance_path = tmp_path / "concordance.csv"
+        _write_csv(
+            concordance_path,
+            [{"membrane_ref": "m1", "tna_piece": "JUST 1/271",
+              "aalt_image_url": "http://aalt.law.uh.edu/.../IMG_3855.htm",
+              "aalt_image_filename": "IMG_3855", "maitland_section": "Memb. 1",
+              "maitland_archive_id": "x", "coverage": "full",
+              "verified": "yes", "confidence": "high", "notes": ""}],
+            ["membrane_ref", "tna_piece", "aalt_image_url", "aalt_image_filename",
+             "maitland_section", "maitland_archive_id", "coverage", "verified",
+             "confidence", "notes"],
+        )
+
+        n = annotate_aalt_image(db_path, concordance_path)
+        assert n == 1  # one membrane matched (both its pleas get updated)
+
+        con = sqlite3.connect(db_path)
+        rows = con.execute(
+            "SELECT aalt_image_url, aalt_verified, aalt_confidence FROM pleas"
+        ).fetchall()
+        assert rows == [
+            ("http://aalt.law.uh.edu/.../IMG_3855.htm", "yes", "high"),
+            ("http://aalt.law.uh.edu/.../IMG_3855.htm", "yes", "high"),
+        ]
+
+    def test_membrane_missing_from_concordance_left_blank_not_guessed(self, tmp_path):
+        db_path = tmp_path / "test.db"
+        _write_csv(
+            tmp_path / "m99_cases.csv",
+            [{"membrane_ref": "m99", "plea_num": "1", "hundred": ""}],
+            PLEA_FIELDS,
+        )
+        build_database([tmp_path / "m99_cases.csv"], db_path)
+
+        concordance_path = tmp_path / "concordance.csv"
+        _write_csv(concordance_path, [], [
+            "membrane_ref", "tna_piece", "aalt_image_url", "aalt_image_filename",
+            "maitland_section", "maitland_archive_id", "coverage", "verified",
+            "confidence", "notes",
+        ])
+
+        n = annotate_aalt_image(db_path, concordance_path)
+        assert n == 0
+
+        con = sqlite3.connect(db_path)
+        assert con.execute("SELECT aalt_image_url FROM pleas").fetchone()[0] is None
 
 
 class TestAnnotateCanonicalHundred:

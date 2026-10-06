@@ -15,6 +15,14 @@ data/hundred_coords.csv, both hand-curated and source-noted. This join is
 recomputed fresh from the current database every run, rather than caching
 plea counts in a hand-edited file, so the map never goes stale relative to
 the pipeline's actual output.
+
+Also joins each plea to its source AALT manuscript image via
+data/concordance.csv (membrane_ref -> aalt_image_url), per CONCORDANCE.md.
+Only one membrane (m24) has passed the V3 spot-check (verified=yes); every
+other row is an arithmetic extrapolation from that single anchor
+(verified=pending) and must be presented as such, never as settled fact —
+see CONCORDANCE.md's "three verifications" and the `verified`/`confidence`
+columns this carries through to pleas.aalt_verified/aalt_confidence.
 """
 
 from __future__ import annotations
@@ -31,6 +39,9 @@ CREATE TABLE IF NOT EXISTS pleas (
     plea_num          TEXT,
     hundred           TEXT,
     hundred_canonical TEXT,
+    aalt_image_url    TEXT,
+    aalt_verified     TEXT,
+    aalt_confidence   TEXT,
     party_1           TEXT,
     party_2           TEXT,
     offence_latin     TEXT,
@@ -133,6 +144,39 @@ def annotate_canonical_hundred(db_path: Path, lookup_path: Path) -> int:
     con.commit()
     con.close()
     return len(rows)
+
+
+def annotate_aalt_image(db_path: Path, concordance_path: Path) -> int:
+    """
+    Populate pleas.aalt_image_url/aalt_verified/aalt_confidence from
+    data/concordance.csv, joined on membrane_ref — "linking a plea to the
+    image it is on" per CONCORDANCE.md.
+
+    A membrane missing from the concordance is left with NULL/blank image
+    fields rather than guessed — never fabricate a plausible-looking AALT
+    URL for a membrane that hasn't actually been mapped.
+    """
+    concordance: dict[str, dict] = {}
+    with concordance_path.open(encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            concordance[row["membrane_ref"]] = row
+
+    con = sqlite3.connect(db_path)
+    membrane_refs = [r[0] for r in con.execute("SELECT DISTINCT membrane_ref FROM pleas")]
+    updates = []
+    for ref in membrane_refs:
+        row = concordance.get(ref)
+        if row is None:
+            continue
+        updates.append((row["aalt_image_url"], row["verified"], row["confidence"], ref))
+    con.executemany(
+        "UPDATE pleas SET aalt_image_url = ?, aalt_verified = ?, aalt_confidence = ? "
+        "WHERE membrane_ref = ?",
+        updates,
+    )
+    con.commit()
+    con.close()
+    return len(updates)
 
 
 def build_hundred_summary(

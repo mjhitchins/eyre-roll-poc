@@ -77,6 +77,13 @@
   <a href="https://archive.org/details/crowncountyplea00glouuoft/page/n41/mode/2up"><em>Pleas of the Crown for the County of Gloucester Before the Abbot of Reading and His Fellow Justices Itinerant in the Fifth Year of the Reign of King Henry the Third and the Year of Grace 1221</em></a>
   (Macmillan, 1884). Public domain. All structured data on this page derives
   from that printed transcription, not from manuscript images.
+  Each plea's "AALT image" link points to the original manuscript scan at the
+  <a href="http://aalt.law.uh.edu/">Anglo-American Legal Tradition</a> archive
+  (crown copyright; linked to, not republished here). Only membrane m24's
+  image/text alignment has been independently spot-checked against Maitland's
+  text; every other membrane's link is an arithmetic extrapolation from that
+  one confirmed anchor, marked "unverified" until individually checked &mdash;
+  see <a href="https://github.com/mjhitchins/eyre-roll-poc/blob/develop/CONCORDANCE.md">CONCORDANCE.md</a>.
   Source code: <a href="https://github.com/mjhitchins/eyre-roll-poc">github.com/mjhitchins/eyre-roll-poc</a>.
 </div>
 
@@ -143,9 +150,13 @@ function parseCSV(text) {
     // --- Plea data + filtering ---
     const COLS  = ['membrane_ref','plea_num','hundred','hundred_canonical','party_1','party_2','offence_type','verdict','amercement_raw'];
     const HEADS = ['Membrane','No.','Hundred (raw)','Hundred (identified)','Party 1','Party 2','Offence','Verdict','Amercement'];
+    // Rendered specially in renderPleas (as a link), not via esc(). Selected
+    // alongside COLS but deliberately left out of the free-text filter below
+    // (searching a URL isn't useful).
+    const IMAGE_COLS = ['aalt_image_url', 'aalt_verified', 'aalt_confidence'];
 
     const allRows = q(
-      `SELECT ${COLS.join(',')} FROM pleas ORDER BY membrane_ref, CAST(plea_num AS INTEGER)`
+      `SELECT ${COLS.concat(IMAGE_COLS).join(',')} FROM pleas ORDER BY membrane_ref, CAST(plea_num AS INTEGER)`
     );
 
     function esc(s) {
@@ -171,11 +182,21 @@ function parseCSV(text) {
         ).join('');
     }
 
+    function imageCell(r) {
+      if (!r.aalt_image_url) return '<td>&mdash;</td>';
+      const confirmed = r.aalt_verified === 'yes';
+      const label = confirmed ? 'View (confirmed)' : 'View (unverified)';
+      const title = confirmed
+        ? 'This membrane’s image/text alignment has been spot-checked (CONCORDANCE.md V3).'
+        : `Arithmetic extrapolation from the one confirmed anchor membrane, not yet independently spot-checked (confidence: ${esc(r.aalt_confidence)}). See CONCORDANCE.md.`;
+      return `<td><a href="${esc(r.aalt_image_url)}" target="_blank" rel="noopener" title="${title}">${label}</a></td>`;
+    }
+
     function renderPleas(rows) {
       document.getElementById('tbl-pleas').innerHTML =
-        '<tr>' + HEADS.map(h => `<th>${h}</th>`).join('') + '</tr>' +
+        '<tr>' + HEADS.map(h => `<th>${h}</th>`).join('') + '<th>AALT image</th></tr>' +
         rows.map(r =>
-          '<tr>' + COLS.map(c => `<td>${esc(r[c])}</td>`).join('') + '</tr>'
+          '<tr>' + COLS.map(c => `<td>${esc(r[c])}</td>`).join('') + imageCell(r) + '</tr>'
         ).join('');
     }
 

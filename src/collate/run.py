@@ -10,7 +10,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from .collator import annotate_canonical_hundred, build_database, build_hundred_summary
+from .collator import (
+    annotate_aalt_image,
+    annotate_canonical_hundred,
+    build_database,
+    build_hundred_summary,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 METRICS_DIR = REPO_ROOT / "output" / "metrics"
@@ -18,6 +23,7 @@ DB_PATH = REPO_ROOT / "output" / "eyre1221.db"
 HUNDRED_LOOKUP_PATH = REPO_ROOT / "data" / "hundred_lookup.csv"
 HUNDRED_COORDS_PATH = REPO_ROOT / "data" / "hundred_coords.csv"
 HUNDRED_SUMMARY_PATH = REPO_ROOT / "output" / "hundreds.csv"
+CONCORDANCE_PATH = REPO_ROOT / "data" / "concordance.csv"
 
 
 def main() -> int:
@@ -34,6 +40,8 @@ def main() -> int:
                         help="Canonical hundred -> lat/lon CSV")
     parser.add_argument("--hundred-summary", type=Path, default=HUNDRED_SUMMARY_PATH,
                         help="Output path for the per-hundred plea count/coordinate summary")
+    parser.add_argument("--concordance", type=Path, default=CONCORDANCE_PATH,
+                        help="Membrane -> AALT image concordance CSV")
     args = parser.parse_args()
 
     csv_paths = sorted(
@@ -49,6 +57,9 @@ def main() -> int:
     print(f"Database written: {args.db}  ({count} pleas)")
 
     annotate_canonical_hundred(args.db, args.hundred_lookup)
+
+    n_images = annotate_aalt_image(args.db, args.concordance)
+    print(f"AALT image links applied: {n_images} membrane(s)")
 
     summary = build_hundred_summary(
         args.db, args.hundred_lookup, args.hundred_coords, args.hundred_summary
